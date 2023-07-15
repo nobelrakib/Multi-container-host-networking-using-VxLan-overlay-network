@@ -62,3 +62,62 @@ CONTAINER ID   IMAGE     COMMAND        CREATED       STATUS         PORTS     N
 #now virtual machine one is ready
 #lets set up the virtual machine two
 ```
+
+Set up virtual machine two
+
+```
+#log in using key
+1.ssh -i vxlan.pem ec2-user@ec2-43-207-115-40.ap-northeast-1.compute.amazonaws.com
+#update repository
+2.yum update -y
+#install docker
+3.sudo yum install -y yum-utils
+4.sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+5.sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+#start docker
+6.sudo systemctl start docker
+#create a subnet by docker network
+7.sudo docker network create --subnet 172.18.0.0/16 vxlan-net
+#check a new interface has created
+8.ip a
+  br-78b607071e6c: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 8951 qdisc noqueue state UP group default
+    link/ether 02:42:ad:c2:9c:93 brd ff:ff:ff:ff:ff:ff
+    inet 172.18.0.1/16 brd 172.18.255.255 scope global br-78b607071e6c
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:adff:fec2:9c93/64 scope link
+       valid_lft forever preferred_lft forever
+       valid_lft forever preferred_lft forever
+#Now create a docker container by our newly created subnet and assign static ip address to it
+9.sudo docker run -d --net vxlan-net --ip 172.18.0.12 ubuntu sleep 3000
+#check container list
+10.docker ps
+CONTAINER ID   IMAGE     COMMAND        CREATED       STATUS         PORTS     NAMES
+d5db27d30b12   ubuntu    "sleep 3000"   6 hours ago   Up 4 seconds             blissful_swanson       
+#now go inside docker container and install necessary dependencies
+11.sudo docker exec -it d5 bash
+12.apt-get update
+13.apt-get install net-tools
+14.apt-get install iputils-ping
+15.exit
+#now we have to create vxlan and one side of it will connected with host virtual machine 
+#eth0 interface and anothe end is connected with our docker bridge interface
+#named br-ee33ea6734a1 so that when we ping from docker it first come to docker 
+#bridge then eth0 interface and then throug tunneling it goes to another virtual machine
+16.sudo ip link add vxlan-demo type vxlan id 100 remote 172.31.35.73 dstport 4789 dev eth0
+#here 172.31.37.176 is another virtual machine ip
+#now a new interface will created name vxlan-demo in host machine which is
+#initially down you have to up it and attach it to 
+17.sudo ip link set vxlan-demo up
+18.sudo ip link set vxlan-demo master br-78b607071e6c
+#now virtual machine twois ready
+```
+
+Now lets ping from vm of one container to another
+
+```
+sudo docker exec -it 4a bash
+ping 172.18.0.12
+```
+![Screenshot (5)](https://github.com/nobelrakib/Multi-container-host-networking-using-VxLan-overlay-network/assets/53372696/9dfaf39c-eee8-4f01-989f-07ad4511734a)
+
+
