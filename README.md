@@ -121,3 +121,21 @@ ping 172.18.0.12
 ![Screenshot (5)](https://github.com/nobelrakib/Multi-container-host-networking-using-VxLan-overlay-network/assets/53372696/9dfaf39c-eee8-4f01-989f-07ad4511734a)
 
 
+so we are getting reply so our vxlan tunneling is working
+
+lets do the same thing for virtual machine 2
+
+```
+sudo docker exec -it d5 bash
+ping 172.18.0.11
+```
+
+![Screenshot (6)](https://github.com/nobelrakib/Multi-container-host-networking-using-VxLan-overlay-network/assets/53372696/0d410793-1ba2-4eb5-a4e8-bc89d7cdc0c7)
+
+so tunneling is working from both side
+
+
+
+
+
+
